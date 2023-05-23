@@ -61,7 +61,7 @@ curl -u <generated-secret>: http://localhost:8084/import --data-binary "@schema.
 
 The response will be:
 
-```bash
+```
 Schema imported successfully.
 Use the following HTTP header to connect to the FaunaDB GraphQL API:
 { "Authorization": "Bearer <generated-secret>" }
@@ -81,13 +81,13 @@ Paginate(Collections())
 
 Response should be:
 
-```bash
+```
 { data: [ Collection("PhonebookEntry"), Collection("Phonebook") ] }
 ```
 
 8. Write a document by running:
 
-```bash
+```
 Create(Collection('Phonebook'), {
   data: {
     firstName: 'Test Name',
@@ -98,7 +98,7 @@ Create(Collection('Phonebook'), {
 
 Response is:
 
-```bash
+```
 {
   ref: <your-ref>,
   ts: <timestamp>,
@@ -108,12 +108,12 @@ Response is:
 
 9. Get collection by running:
 
-```bash
+```
 Get(Collection('Phonebook'))
 ```
 
 10. Get created document by running:
 
-```bash
+```
 Get(<your-ref>)
 ```
