@@ -1,6 +1,6 @@
 # Phonebook-Full-Stack
 
-Vite, React, FaunaDB, GraphQL Full Stack Phonebook App
+Vite, React, Docker, FaunaDB, GraphQL Full Stack Phonebook App
 
 ## Backend Setup
 
