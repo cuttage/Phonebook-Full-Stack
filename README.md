@@ -26,13 +26,9 @@ fauna create-database test --secret=secret --domain=127.0.0.1 --port=8443 --sche
 fauna create-key test --secret=secret --domain=127.0.0.1 --port=8443 --scheme=http
 ```
 
-```bash
-fauna create-key test --secret=secret --domain=127.0.0.1 --port=8443 --scheme=http
-```
-
 The above will generate the response:
 
-```bash
+```
 creating key for database 'test' with role 'admin'
 
   created key for database 'test' with role 'admin'.
@@ -45,7 +41,7 @@ creating key for database 'test' with role 'admin'
 
 4. Create a schema.gql file with the following content:
 
-```typescript
+```
 type Phonebook {
   entries: [PhonebookEntry!]! @relation
 }
@@ -79,7 +75,7 @@ fauna shell test --secret=secret --domain=127.0.0.1 --port=8443 --scheme=http
 
 7. Show available collections by running:
 
-```bash
+```
 Paginate(Collections())
 ```
 
@@ -92,15 +88,12 @@ Response should be:
 8. Write a document by running:
 
 ```bash
-Create(
-...   Collection('Phonebook'),
-...   {
-.....     data: {
-.......       firstName: 'Test Name',
-.......       number: 'Test Number',
-.......     },
-.....   },
-... )
+Create(Collection('Phonebook'), {
+  data: {
+    firstName: 'Test Name',
+    number: 'Test Number',
+  },
+})
 ```
 
 Response is:
