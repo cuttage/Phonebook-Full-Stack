@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;700&display=swap');
+
+#root,
+body {
+  height: 100vh;
+  max-width: 1280px;
+  margin: 0 auto;
+  text-align: center;
+  background-color: #0d0111;
+  color: #f2f3f4;
+  font-family: 'Prompt', sans-serif;
+  text-rendering: geometricPrecision;
+}
+
+a.center-flex,
+div.center-flex {
+  display: flex;
+  align-items: center;
+}
+
+div.column-flex {
+  flex-direction: column;
+}

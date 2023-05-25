@@ -1,6 +1,6 @@
 # Phonebook-Full-Stack
 
-Vite, React, Docker, FaunaDB, GraphQL Full Stack Phonebook App
+TypeScript, Vite, React, Docker, FaunaDB (with the possibility to use GraphQL), MaterialUI, TanStack Query Full Stack Phonebook App
 
 ## Backend Setup
 
@@ -39,7 +39,7 @@ creating key for database 'test' with role 'admin'
   the above secret.
 ```
 
-4. Create a schema.gql file with the following content:
+4. Create a schema.gql file with the following content. This will be used by the Fauna GraphQL API exposed at port 8084 and not by the Fauna Http API exposed at port 8443. Please note that data are not in sync between the two (in the project I will work with the Http API):
 
 ```
 type Phonebook {
@@ -88,11 +88,12 @@ Response should be:
 8. Write a document by running:
 
 ```
-Create(Collection('Phonebook'), {
-  data: {
-    firstName: 'Test Name',
-    number: 'Test Number',
-  },
+Create(Collection('PhonebookEntry'), {
+   data: {
+     firstName: 'Test Name',
+     lastName: 'Test Last Name',
+     number: 'Test Number',
+   },
 })
 ```
 
@@ -102,14 +103,18 @@ Response is:
 {
   ref: <your-ref>,
   ts: <timestamp>,
-  data: { firstName: 'Test Name', number: 'Test Number' }
+  data: {
+    firstName: 'Test Name',
+    lastName: 'Test Last Name',
+    number: 'Test Number'
+  }
 }
 ```
 
 9. Get collection by running:
 
 ```
-Get(Collection('Phonebook'))
+Get(Collection('PhonebookEntry'))
 ```
 
 10. Get created document by running:
@@ -117,3 +122,24 @@ Get(Collection('Phonebook'))
 ```
 Get(<your-ref>)
 ```
+
+Note: `<your-ref>` looks something like this:
+
+```
+Ref(Collection("PhonebookEntry"), <id>)
+```
+
+## Frontend Setup
+
+1. Create a `.env` file in the root of your project with the following values:
+
+```
+REACT_APP_FAUNA_SECRET=<generated-secret>
+REACT_APP_FAUNA_PORT=8443
+REACT_APP_FAUNA_SCHEME=http
+REACT_APP_FAUNA_DOMAIN=127.0.0.1
+REACT_APP_FAUNA_COLLECTION=PhonebookEntry
+REACT_APP_FAUNA_DOCUMENT_ID_TEST=<id>
+```
+
+Remember to change `<generated-secret>` and `<id>` as needed.
