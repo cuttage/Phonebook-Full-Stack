@@ -7,6 +7,7 @@ import useStringAvatar from '../hooks/useStringAvatar'
 import { useForm } from '../hooks/useForm'
 import useFormattedString from '../hooks/useFormattedString'
 import { fieldNames, initialFormValues } from '../formUtils'
+import logger from '../logger'
 import {
   Button,
   Tooltip,
@@ -38,12 +39,12 @@ const PhonebookEntryComponent = () => {
     try {
       const query = q.Get(q.Ref(q.Collection(collection), id))
       const response = await client.query<PhonebookEntryData>(query)
-      console.log('Phonebook Entry Loaded:', response.data)
+      logger.info('Phonebook Entry Loaded:', response.data)
       const formData = transformToFormData(response.data)
       setFormValues(formData)
       return response.data
     } catch (error) {
-      console.error('Failed to fetch phonebook entry', error)
+      logger.error('Failed to fetch phonebook entry', error)
       throw error
     }
   }
@@ -58,17 +59,17 @@ const PhonebookEntryComponent = () => {
     try {
       const query = q.Delete(q.Ref(q.Collection(collection), id))
       await client.query(query)
-      console.log('Phonebook Entry Deleted')
+      logger.info('Phonebook Entry Deleted')
       navigate('/')
     } catch (error) {
-      console.error('Failed to delete phonebook entry', error)
+      logger.error('Failed to delete phonebook entry', error)
       throw error
     }
   }
 
   const deleteMutation = useMutation(deletePhonebookEntry, {
     onError: (error) => {
-      console.error('Failed to delete phonebook entry', error)
+      logger.error('Failed to delete phonebook entry', error)
     },
   })
 
@@ -78,12 +79,12 @@ const PhonebookEntryComponent = () => {
         data: updatedValues,
       })
       const response = await client.query<PhonebookEntryData>(query)
-      console.log('Phonebook Entry Updated:', response)
+      logger.info('Phonebook Entry Updated:', response)
       return response
     },
     {
       onError: (error) => {
-        console.error('Failed to update phonebook entry', error)
+        logger.error('Failed to update phonebook entry', error)
       },
       onSuccess: () => {
         queryClient.invalidateQueries(['phonebookEntry', id])
@@ -102,7 +103,7 @@ const PhonebookEntryComponent = () => {
     )
 
     if (missingFields.length > 0) {
-      console.error('Missing required fields:', missingFields)
+      logger.error('Missing required fields:', missingFields)
       return
     }
 

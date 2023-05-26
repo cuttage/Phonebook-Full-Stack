@@ -7,6 +7,7 @@ import useStringAvatar from '../hooks/useStringAvatar'
 import { useForm } from '../hooks/useForm'
 import useFormattedString from '../hooks/useFormattedString'
 import { initialFormValues, fieldNames } from '../formUtils'
+import logger from '../logger'
 import {
   IconButton,
   TextField,
@@ -44,11 +45,11 @@ const PhonebookComponent = () => {
 
       const response = await client.query<FindPhonebookResponse>(query)
 
-      console.log('Phonebook Loaded:', response.data.data)
+      logger.info('Phonebook Loaded:', response.data.data)
 
       return response.data.data
     } catch (error) {
-      console.error('Failed to fetch phonebook entries', error)
+      logger.error('Failed to fetch phonebook entries', error)
       throw error
     }
   }
@@ -88,7 +89,7 @@ const PhonebookComponent = () => {
     )
 
     if (missingFields.length > 0) {
-      console.error('Missing required fields:', missingFields)
+      logger.error('Missing required fields:', missingFields)
       return
     }
 
@@ -97,13 +98,13 @@ const PhonebookComponent = () => {
         q.Create(q.Collection(collection), { data: formValues })
       )
 
-      console.log('Phonebook Entry Created:', response)
+      logger.info('Phonebook Entry Created:', response)
 
       queryClient.invalidateQueries('phonebookEntries')
 
       setFormValues(initialFormValues)
     } catch (error) {
-      console.error('Failed to create phonebook entry', error)
+      logger.error('Failed to create phonebook entry', error)
     }
   }
 
