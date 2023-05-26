@@ -1,18 +1,31 @@
+import { useState } from 'react'
 import { Expr, query as q } from 'faunadb'
 import client from '../faunadbClientFauna'
 import { Link } from 'react-router-dom'
-import Avatar from '@mui/material/Avatar'
-import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemText from '@mui/material/ListItemText'
-import ListItemAvatar from '@mui/material/ListItemAvatar'
-import Typography from '@mui/material/Typography'
-import { useQuery } from 'react-query'
+import { useQuery, useQueryClient } from 'react-query'
 import useStringAvatar from '../hooks/useStringAvatar'
+import { useForm } from '../hooks/useForm'
+import { initialFormValues, fieldNames } from '../formUtils'
+import {
+  IconButton,
+  TextField,
+  Typography,
+  ListItemAvatar,
+  ListItemText,
+  ListItem,
+  List,
+  Avatar,
+  Button,
+} from '@mui/material'
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
 
 const collection = process.env.REACT_APP_FAUNA_COLLECTION as string
 
 const PhonebookComponent = () => {
+  const queryClient = useQueryClient()
+  const { formValues, setFormValues, handleInputChange } = useForm()
+  const [addSection, setAddSection] = useState<boolean>(false)
+
   const fetchPhonebookEntries = async () => {
     try {
       const query = q.Map(
@@ -36,6 +49,38 @@ const PhonebookComponent = () => {
     isLoading,
     isError,
   } = useQuery('phonebookEntries', fetchPhonebookEntries)
+
+  const toggleAddSection = () => {
+    setAddSection(!addSection)
+  }
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+
+    const requiredFields = ['firstName', 'number']
+    const missingFields = requiredFields.filter(
+      (fieldName) => !formValues[fieldName]
+    )
+
+    if (missingFields.length > 0) {
+      console.error('Missing required fields:', missingFields)
+      return
+    }
+
+    try {
+      const response = await client.query(
+        q.Create(q.Collection(collection), { data: formValues })
+      )
+
+      console.log('Form submitted:', response)
+
+      queryClient.invalidateQueries('phonebookEntries')
+
+      setFormValues(initialFormValues)
+    } catch (error) {
+      console.error('Failed to create phonebook entry', error)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -86,8 +131,95 @@ const PhonebookComponent = () => {
         <List
           sx={{
             width: '100%',
+            paddingBottom: '74.02px',
           }}
         >
+          <ListItem
+            sx={{
+              border: '1px solid #f2f3f4',
+            }}
+            onClick={toggleAddSection}
+          >
+            <ListItemAvatar>
+              <IconButton sx={{ color: '#f2f3f4' }} disabled>
+                <AddRoundedIcon sx={{ color: '#f2f3f4' }} />
+              </IconButton>
+            </ListItemAvatar>
+            <ListItemText
+              disableTypography
+              primary={
+                <Typography
+                  variant="body1"
+                  style={{
+                    color: '#f2f3f4',
+                    fontFamily: 'Prompt',
+                    fontWeight: 700,
+                    textRendering: 'geometricPrecision',
+                  }}
+                >
+                  Add
+                </Typography>
+              }
+            />
+          </ListItem>
+          {addSection && (
+            <ListItem
+              sx={{
+                border: '1px solid #f2f3f4',
+              }}
+            >
+              <form onSubmit={handleSubmit}>
+                {fieldNames.map((fieldName) => (
+                  <TextField
+                    key={fieldName.toString()}
+                    required={
+                      fieldName === 'firstName' || fieldName === 'number'
+                    }
+                    label={fieldName.toString()}
+                    name={fieldName.toString()}
+                    value={formValues[fieldName]}
+                    onChange={handleInputChange}
+                    variant="filled"
+                    sx={{
+                      border: '1px solid #f2f3f4',
+                      input: {
+                        color: '#f2f3f4',
+                        fontFamily: 'Prompt',
+                        fontWeight: 700,
+                      },
+                      label: {
+                        color: '#f2f3f4',
+                        fontFamily: 'Prompt',
+                        fontWeight: 700,
+                      },
+                      fontFamily: 'Prompt',
+                      bgcolor: '#0d0111',
+                    }}
+                    margin="dense"
+                    color="secondary"
+                    fullWidth
+                  />
+                ))}
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="secondary"
+                  sx={{
+                    bgcolor: 'magenta',
+                    color: '#f2f3f4',
+                    fontFamily: 'Prompt',
+                    fontWeight: 700,
+                    margin: '10px',
+                    '&:hover': {
+                      bgcolor: 'magenta',
+                    },
+                  }}
+                >
+                  Create
+                </Button>
+              </form>
+            </ListItem>
+          )}
           {phonebookEntries?.map((entry, index) => (
             <ListItem
               key={entry?.ref?.value?.id}
