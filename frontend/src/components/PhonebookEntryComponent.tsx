@@ -1,13 +1,8 @@
-import { useState } from 'react'
-import { query as q } from 'faunadb'
-import client from '../faunadbClientFauna'
-import { useParams, Link, useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { useParams, Link } from 'react-router-dom'
 import useStringAvatar from '../hooks/useStringAvatar'
-import { useForm } from '../hooks/useForm'
 import useFormattedString from '../hooks/useFormattedString'
-import { fieldNames, initialFormValues } from '../formUtils'
-import logger from '../logger'
+import { fieldNames } from '../utils/formUtils'
+import * as sxUtils from '../utils/sxUtils'
 import {
   Button,
   Tooltip,
@@ -22,127 +17,38 @@ import {
   EditRounded,
   DeleteRounded,
 } from '@mui/icons-material'
-
-const collection = process.env.REACT_APP_FAUNA_COLLECTION as string
+import { usePhonebookEntry } from '../hooks/usePhonebookEntry'
 
 const PhonebookEntryComponent = () => {
   const { id } = useParams()
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
-  const { formValues, setFormValues, handleInputChange, transformToFormData } =
-    useForm()
-  const formatText = useFormattedString()
-  const [deleteSection, setDeleteSection] = useState<boolean>(false)
-  const [editSection, setEditSection] = useState<boolean>(false)
-
-  const fetchPhonebookEntry = async () => {
-    try {
-      const query = q.Get(q.Ref(q.Collection(collection), id))
-      const response = await client.query<PhonebookEntryData>(query)
-      logger.info('Phonebook Entry Loaded:', response.data)
-      const formData = transformToFormData(response.data)
-      setFormValues(formData)
-      return response.data
-    } catch (error) {
-      logger.error('Failed to fetch phonebook entry', error)
-      throw error
-    }
-  }
-
   const {
-    data: phonebookEntry,
+    formValues,
     isLoading,
     isError,
-  } = useQuery(['phonebookEntry', id], fetchPhonebookEntry)
-
-  const deletePhonebookEntry = async () => {
-    try {
-      const query = q.Delete(q.Ref(q.Collection(collection), id))
-      await client.query(query)
-      logger.info('Phonebook Entry Deleted')
-      navigate('/')
-    } catch (error) {
-      logger.error('Failed to delete phonebook entry', error)
-      throw error
-    }
-  }
-
-  const deleteMutation = useMutation(deletePhonebookEntry, {
-    onError: (error) => {
-      logger.error('Failed to delete phonebook entry', error)
-    },
-  })
-
-  const updateMutation = useMutation(
-    async (updatedValues: FormValues) => {
-      const query = q.Update(q.Ref(q.Collection(collection), id), {
-        data: updatedValues,
-      })
-      const response = await client.query<PhonebookEntryData>(query)
-      logger.info('Phonebook Entry Updated:', response)
-      return response
-    },
-    {
-      onError: (error) => {
-        logger.error('Failed to update phonebook entry', error)
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries(['phonebookEntry', id])
-        toggleEditSection()
-        setFormValues(initialFormValues)
-      },
-    }
-  )
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-
-    const requiredFields = ['firstName', 'number']
-    const missingFields = requiredFields.filter(
-      (fieldName) => !formValues[fieldName]
-    )
-
-    if (missingFields.length > 0) {
-      logger.error('Missing required fields:', missingFields)
-      return
-    }
-
-    updateMutation.mutate(formValues)
-  }
-
-  const toggleDeleteSection = () => {
-    setDeleteSection(!deleteSection)
-    setEditSection(false)
-  }
-
-  const toggleEditSection = () => {
-    setEditSection(!editSection)
-    setDeleteSection(false)
-  }
+    handleSubmit,
+    toggleEditSection,
+    toggleDeleteSection,
+    phonebookEntry,
+    deleteMutation,
+    handleInputChange,
+    deleteSection,
+    editSection,
+  } = usePhonebookEntry(id)
+  const formatText = useFormattedString()
 
   if (isLoading) {
     return (
       <div>
         <IconButton
           size="large"
-          sx={{ color: '#f2f3f4', marginTop: '20px' }}
+          sx={sxUtils.iconButtonSxTwo}
           component={Link}
           to="/"
         >
           <ArrowBackRounded />
         </IconButton>
         <h1>Phonebook Entry</h1>
-        <Typography
-          style={{
-            color: '#f2f3f4',
-            fontFamily: 'Prompt',
-            fontWeight: 700,
-            fontSize: '18px',
-            textRendering: 'geometricPrecision',
-          }}
-        >
-          Loading...
-        </Typography>
+        <Typography sx={sxUtils.typographySxOne}>Loading...</Typography>
       </div>
     )
   }
@@ -151,22 +57,14 @@ const PhonebookEntryComponent = () => {
       <div>
         <IconButton
           size="large"
-          sx={{ color: '#f2f3f4', marginTop: '20px' }}
+          sx={sxUtils.iconButtonSxTwo}
           component={Link}
           to="/"
         >
           <ArrowBackRounded />
         </IconButton>
         <h1>Phonebook Entry</h1>
-        <Typography
-          style={{
-            color: '#f2f3f4',
-            fontFamily: 'Prompt',
-            fontWeight: 700,
-            fontSize: '18px',
-            textRendering: 'geometricPrecision',
-          }}
-        >
+        <Typography sx={sxUtils.typographySxOne}>
           Failed to fetch phonebook entry
         </Typography>
       </div>
@@ -179,7 +77,7 @@ const PhonebookEntryComponent = () => {
     <div style={{ paddingBottom: '74.02px' }}>
       <IconButton
         size="large"
-        sx={{ color: '#f2f3f4', marginTop: '20px' }}
+        sx={sxUtils.iconButtonSxTwo}
         component={Link}
         to="/"
       >
@@ -191,52 +89,19 @@ const PhonebookEntryComponent = () => {
           className="center-flex column-flex"
           key={phonebookEntry?.ref?.value?.id}
         >
-          <Avatar
-            {...stringAvatar}
-            sx={{
-              width: 56,
-              height: 56,
-              bgcolor: 'magenta',
-              color: '#f2f3f4',
-            }}
-          />
-          <Typography
-            style={{
-              color: '#f2f3f4',
-              fontFamily: 'Prompt',
-              fontWeight: 700,
-              fontSize: '36px',
-              textRendering: 'geometricPrecision',
-            }}
-          >
+          <Avatar {...stringAvatar} sx={sxUtils.avatarSxTwo} />
+          <Typography sx={sxUtils.typographySxTwo}>
             {phonebookEntry?.data?.firstName}{' '}
             {phonebookEntry?.data?.lastName && phonebookEntry?.data?.lastName}
           </Typography>
-          <Typography
-            style={{
-              color: '#f2f3f4',
-              fontFamily: 'Prompt',
-              fontWeight: 700,
-              fontSize: '24px',
-              textRendering: 'geometricPrecision',
-            }}
-          >
+          <Typography sx={sxUtils.typographySxThree}>
             {phonebookEntry?.data?.number}
           </Typography>
           <div className="center-flex">
             <Tooltip title="Edit" arrow>
               <IconButton
                 color="secondary"
-                sx={{
-                  bgcolor: 'transparent',
-                  color: '#f2f3f4',
-                  fontFamily: 'Prompt',
-                  fontWeight: 700,
-                  margin: '10px',
-                  '&:hover': {
-                    bgcolor: 'transparent',
-                  },
-                }}
+                sx={sxUtils.iconButtonSxThree}
                 onClick={toggleEditSection}
               >
                 <EditRounded />
@@ -245,56 +110,23 @@ const PhonebookEntryComponent = () => {
             <Tooltip title="Delete" arrow>
               <IconButton
                 color="secondary"
-                sx={{
-                  bgcolor: 'transparent',
-                  color: '#f2f3f4',
-                  fontFamily: 'Prompt',
-                  fontWeight: 700,
-                  margin: '10px',
-                  '&:hover': {
-                    bgcolor: 'transparent',
-                  },
-                }}
+                sx={sxUtils.iconButtonSxThree}
                 onClick={toggleDeleteSection}
               >
                 <DeleteRounded />
               </IconButton>
             </Tooltip>
           </div>
-          <Divider
-            sx={{
-              borderColor: '#f2f3f4',
-              width: '100%',
-              marginTop: '20px',
-              marginBottom: '20px',
-            }}
-          />
+          <Divider sx={sxUtils.dividerSxOne} />
           {deleteSection && (
             <div className="center-flex row-flex">
-              <Typography
-                style={{
-                  color: '#f2f3f4',
-                  fontFamily: 'Prompt',
-                  fontWeight: 700,
-                  fontSize: '24px',
-                  textRendering: 'geometricPrecision',
-                }}
-              >
+              <Typography sx={sxUtils.typographySxThree}>
                 Permanently Delete
               </Typography>
               <Button
                 variant="contained"
                 color="secondary"
-                sx={{
-                  bgcolor: '#FF0080',
-                  color: '#f2f3f4',
-                  fontFamily: 'Prompt',
-                  fontWeight: 700,
-                  margin: '10px',
-                  '&:hover': {
-                    bgcolor: '#FF0080',
-                  },
-                }}
+                sx={sxUtils.buttonSxThree}
                 onClick={() => deleteMutation.mutate()}
               >
                 Delete
@@ -315,21 +147,7 @@ const PhonebookEntryComponent = () => {
                     value={formValues[fieldName]}
                     onChange={handleInputChange}
                     variant="filled"
-                    sx={{
-                      border: '1px solid #f2f3f4',
-                      input: {
-                        color: '#f2f3f4',
-                        fontFamily: 'Prompt',
-                        fontWeight: 700,
-                      },
-                      label: {
-                        color: '#f2f3f4',
-                        fontFamily: 'Prompt',
-                        fontWeight: 700,
-                      },
-                      fontFamily: 'Prompt',
-                      bgcolor: '#0d0111',
-                    }}
+                    sx={sxUtils.textFieldSxOne}
                     margin="dense"
                     color="secondary"
                     fullWidth
@@ -340,16 +158,7 @@ const PhonebookEntryComponent = () => {
                     type="submit"
                     variant="contained"
                     color="secondary"
-                    sx={{
-                      bgcolor: 'magenta',
-                      color: '#f2f3f4',
-                      fontFamily: 'Prompt',
-                      fontWeight: 700,
-                      margin: '10px',
-                      '&:hover': {
-                        bgcolor: 'magenta',
-                      },
-                    }}
+                    sx={sxUtils.buttonSxTwo}
                   >
                     Update
                   </Button>

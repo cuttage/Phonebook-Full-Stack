@@ -1,13 +1,5 @@
 import { useState } from 'react'
-import { Expr, query as q } from 'faunadb'
-import client from '../faunadbClientFauna'
 import { Link } from 'react-router-dom'
-import { useQuery, useQueryClient } from 'react-query'
-import useStringAvatar from '../hooks/useStringAvatar'
-import { useForm } from '../hooks/useForm'
-import useFormattedString from '../hooks/useFormattedString'
-import { initialFormValues, fieldNames } from '../formUtils'
-import logger from '../logger'
 import {
   IconButton,
   TextField,
@@ -21,44 +13,31 @@ import {
   Pagination,
 } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
-
-const collection = process.env.REACT_APP_FAUNA_COLLECTION as string
+import * as sxUtils from '../utils/sxUtils'
+import { fieldNames } from '../utils/formUtils'
+import { usePhonebook } from '../hooks/usePhonebook'
+import useStringAvatar from '../hooks/useStringAvatar'
 
 const PhonebookComponent = () => {
-  const queryClient = useQueryClient()
-  const { formValues, setFormValues, handleInputChange } = useForm()
-  const formatText = useFormattedString()
-  const [addSection, setAddSection] = useState<boolean>(false)
-  const [sortKey, setSortKey] = useState<string>('firstName')
-  const [searchQuery, setSearchQuery] = useState<string>('')
-  const ITEMS_PER_PAGE = 10
-  const [currentPage, setCurrentPage] = useState<number>(1)
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-  const endIndex = startIndex + ITEMS_PER_PAGE
-
-  const fetchPhonebookEntries = async () => {
-    try {
-      const query = q.Map(
-        q.Paginate(q.Documents(q.Collection(collection))),
-        q.Lambda((ref: Expr) => q.Get(ref))
-      )
-
-      const response = await client.query<FindPhonebookResponse>(query)
-
-      logger.info('Phonebook Loaded:', response.data.data)
-
-      return response.data.data
-    } catch (error) {
-      logger.error('Failed to fetch phonebook entries', error)
-      throw error
-    }
-  }
-
   const {
-    data: phonebookEntries,
+    formValues,
+    handleInputChange,
+    formatText,
+    phonebookEntries,
     isLoading,
     isError,
-  } = useQuery('phonebookEntries', fetchPhonebookEntries)
+    handleSubmit,
+    sortKey,
+    handleSort,
+    searchQuery,
+    handleSearch,
+    addSection,
+    toggleAddSection,
+  } = usePhonebook()
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const ITEMS_PER_PAGE = 10
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
 
   const sortedEntries = phonebookEntries?.sort((a, b) => {
     const nameA = (a?.data[sortKey as keyof EntryData] || '').toLowerCase()
@@ -80,61 +59,16 @@ const PhonebookComponent = () => {
 
   const itemCount = filteredEntries?.length || 0
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-
-    const requiredFields = ['firstName', 'number']
-    const missingFields = requiredFields.filter(
-      (fieldName) => !formValues[fieldName]
-    )
-
-    if (missingFields.length > 0) {
-      logger.error('Missing required fields:', missingFields)
-      return
-    }
-
-    try {
-      const response = await client.query(
-        q.Create(q.Collection(collection), { data: formValues })
-      )
-
-      logger.info('Phonebook Entry Created:', response)
-
-      queryClient.invalidateQueries('phonebookEntries')
-
-      setFormValues(initialFormValues)
-    } catch (error) {
-      logger.error('Failed to create phonebook entry', error)
-    }
-  }
-
-  const handleSort = (key: string) => {
-    setSortKey(key)
-  }
-
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value)
-  }
-
-  const toggleAddSection = () => {
-    setAddSection(!addSection)
-  }
+  const stringAvatars =
+    phonebookEntries?.map((entry) =>
+      useStringAvatar(`${entry?.data?.firstName}`)
+    ) ?? []
 
   if (isLoading) {
     return (
       <div>
         <h1>Phonebook</h1>
-        <Typography
-          style={{
-            color: '#f2f3f4',
-            fontFamily: 'Prompt',
-            fontWeight: 700,
-            fontSize: '18px',
-            textRendering: 'geometricPrecision',
-          }}
-        >
-          Loading...
-        </Typography>
+        <Typography sx={sxUtils.typographySxOne}>Loading...</Typography>
       </div>
     )
   }
@@ -142,129 +76,62 @@ const PhonebookComponent = () => {
     return (
       <div>
         <h1>Phonebook</h1>
-        <Typography
-          style={{
-            color: '#f2f3f4',
-            fontFamily: 'Prompt',
-            fontWeight: 700,
-            fontSize: '18px',
-            textRendering: 'geometricPrecision',
-          }}
-        >
+        <Typography sx={sxUtils.typographySxOne}>
           Failed to fetch phonebook entries
         </Typography>
       </div>
     )
   }
 
-  const stringAvatars =
-    phonebookEntries?.map((entry) =>
-      useStringAvatar(`${entry?.data?.firstName}`)
-    ) ?? []
-
   return (
     <div>
       <h1>Phonebook</h1>
       {phonebookEntries !== null && phonebookEntries !== undefined && (
-        <List
-          sx={{
-            width: '100%',
-            paddingBottom: '74.02px',
-          }}
-        >
-          <ListItem
-            sx={{
-              border: '1px solid #f2f3f4',
-            }}
-          >
+        <List sx={sxUtils.listSxOne}>
+          <ListItem sx={sxUtils.listItemSxOne}>
             <Button
               onClick={() => handleSort('firstName')}
-              sx={{
-                color: '#f2f3f4',
-                fontFamily: 'Prompt',
-                fontWeight: 700,
-                textRendering: 'geometricPrecision',
-              }}
+              sx={sxUtils.buttonSxOne}
             >
               Sort by First Name
             </Button>
             <Button
               onClick={() => handleSort('lastName')}
-              sx={{
-                color: '#f2f3f4',
-                fontFamily: 'Prompt',
-                fontWeight: 700,
-                textRendering: 'geometricPrecision',
-              }}
+              sx={sxUtils.buttonSxOne}
             >
               Sort by Last Name
             </Button>
           </ListItem>
-          <ListItem
-            sx={{
-              border: '1px solid #f2f3f4',
-            }}
-          >
+          <ListItem sx={sxUtils.listItemSxOne}>
             <TextField
               label="Search"
               name="searchQuery"
               value={searchQuery}
               onChange={handleSearch}
               variant="filled"
-              sx={{
-                border: '1px solid #f2f3f4',
-                input: {
-                  color: '#f2f3f4',
-                  fontFamily: 'Prompt',
-                  fontWeight: 700,
-                },
-                label: {
-                  color: '#f2f3f4',
-                  fontFamily: 'Prompt',
-                  fontWeight: 700,
-                },
-                fontFamily: 'Prompt',
-                bgcolor: '#0d0111',
-              }}
+              sx={sxUtils.textFieldSxOne}
               margin="dense"
               color="secondary"
               fullWidth
             />
           </ListItem>
-          <ListItem
-            sx={{
-              border: '1px solid #f2f3f4',
-            }}
-            onClick={toggleAddSection}
-          >
+          <ListItem sx={sxUtils.listItemSxOne} onClick={toggleAddSection}>
             <ListItemAvatar>
-              <IconButton sx={{ color: '#f2f3f4' }} disabled>
-                <AddRoundedIcon sx={{ color: '#f2f3f4' }} />
+              <IconButton sx={sxUtils.iconButtonSxOne} disabled>
+                <AddRoundedIcon sx={sxUtils.iconButtonSxOne} />
               </IconButton>
             </ListItemAvatar>
             <ListItemText
               disableTypography
               primary={
-                <Typography
-                  variant="body1"
-                  style={{
-                    color: '#f2f3f4',
-                    fontFamily: 'Prompt',
-                    fontWeight: 700,
-                    textRendering: 'geometricPrecision',
-                  }}
-                >
+                <Typography variant="body1" sx={sxUtils.buttonSxOne}>
                   Add
                 </Typography>
               }
             />
           </ListItem>
           {addSection && (
-            <ListItem
-              sx={{
-                border: '1px solid #f2f3f4',
-              }}
-            >
+            <ListItem sx={sxUtils.listItemSxOne}>
               <form onSubmit={handleSubmit}>
                 {fieldNames.map((fieldName) => (
                   <TextField
@@ -277,21 +144,7 @@ const PhonebookComponent = () => {
                     value={formValues[fieldName]}
                     onChange={handleInputChange}
                     variant="filled"
-                    sx={{
-                      border: '1px solid #f2f3f4',
-                      input: {
-                        color: '#f2f3f4',
-                        fontFamily: 'Prompt',
-                        fontWeight: 700,
-                      },
-                      label: {
-                        color: '#f2f3f4',
-                        fontFamily: 'Prompt',
-                        fontWeight: 700,
-                      },
-                      fontFamily: 'Prompt',
-                      bgcolor: '#0d0111',
-                    }}
+                    sx={sxUtils.textFieldSxOne}
                     margin="dense"
                     color="secondary"
                     fullWidth
@@ -301,16 +154,7 @@ const PhonebookComponent = () => {
                   type="submit"
                   variant="contained"
                   color="secondary"
-                  sx={{
-                    bgcolor: 'magenta',
-                    color: '#f2f3f4',
-                    fontFamily: 'Prompt',
-                    fontWeight: 700,
-                    margin: '10px',
-                    '&:hover': {
-                      bgcolor: 'magenta',
-                    },
-                  }}
+                  sx={sxUtils.buttonSxTwo}
                 >
                   Create
                 </Button>
@@ -318,48 +162,24 @@ const PhonebookComponent = () => {
             </ListItem>
           )}
           {filteredEntries?.slice(startIndex, endIndex).map((entry, index) => (
-            <ListItem
-              key={entry?.ref?.value?.id}
-              sx={{
-                border: '1px solid #f2f3f4',
-              }}
-            >
+            <ListItem key={entry?.ref?.value?.id} sx={sxUtils.listItemSxOne}>
               <Link
                 to={`/entry/${entry?.ref?.value?.id}`}
                 className="center-flex"
               >
                 <ListItemAvatar>
-                  <Avatar
-                    {...stringAvatars[index]}
-                    sx={{ bgcolor: 'magenta', color: '#f2f3f4' }}
-                  />
+                  <Avatar {...stringAvatars[index]} sx={sxUtils.avatarSxOne} />
                 </ListItemAvatar>
                 <ListItemText
                   disableTypography
                   primary={
-                    <Typography
-                      variant="body1"
-                      style={{
-                        color: '#f2f3f4',
-                        fontFamily: 'Prompt',
-                        fontWeight: 700,
-                        textRendering: 'geometricPrecision',
-                      }}
-                    >
+                    <Typography variant="body1" sx={sxUtils.buttonSxOne}>
                       {entry?.data?.firstName}{' '}
                       {entry?.data?.lastName && entry?.data?.lastName}
                     </Typography>
                   }
                   secondary={
-                    <Typography
-                      variant="body2"
-                      style={{
-                        color: '#f2f3f4',
-                        fontFamily: 'Prompt',
-                        fontWeight: 700,
-                        textRendering: 'geometricPrecision',
-                      }}
-                    >
+                    <Typography variant="body2" sx={sxUtils.buttonSxOne}>
                       {entry?.data?.number}
                     </Typography>
                   }
@@ -371,15 +191,7 @@ const PhonebookComponent = () => {
             count={Math.ceil(itemCount / ITEMS_PER_PAGE)}
             page={currentPage}
             onChange={(_, page) => setCurrentPage(page)}
-            sx={{
-              button: {
-                color: '#f2f3f4',
-                fontFamily: 'Prompt',
-                fontWeight: 700,
-                textRendering: 'geometricPrecision',
-                marginTop: '20px',
-              },
-            }}
+            sx={sxUtils.paginationSxOne}
           />
         </List>
       )}
