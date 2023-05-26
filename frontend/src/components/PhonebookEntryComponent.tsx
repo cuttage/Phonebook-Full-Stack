@@ -5,6 +5,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import useStringAvatar from '../hooks/useStringAvatar'
 import { useForm } from '../hooks/useForm'
+import useFormattedString from '../hooks/useFormattedString'
 import { fieldNames, initialFormValues } from '../formUtils'
 import {
   Button,
@@ -29,6 +30,7 @@ const PhonebookEntryComponent = () => {
   const navigate = useNavigate()
   const { formValues, setFormValues, handleInputChange, transformToFormData } =
     useForm()
+  const formatText = useFormattedString()
   const [deleteSection, setDeleteSection] = useState<boolean>(false)
   const [editSection, setEditSection] = useState<boolean>(false)
 
@@ -46,32 +48,22 @@ const PhonebookEntryComponent = () => {
     }
   }
 
-  const deletePhonebookEntry = async () => {
-    try {
-      const query = q.Delete(q.Ref(q.Collection(collection), id))
-      await client.query(query)
-      console.log('Phonebook Entry deleted')
-      navigate('/')
-    } catch (error) {
-      console.error('Failed to delete phonebook entry', error)
-      throw error
-    }
-  }
-
   const {
     data: phonebookEntry,
     isLoading,
     isError,
   } = useQuery(['phonebookEntry', id], fetchPhonebookEntry)
 
-  const toggleDeleteSection = () => {
-    setDeleteSection(!deleteSection)
-    setEditSection(false)
-  }
-
-  const toggleEditSection = () => {
-    setEditSection(!editSection)
-    setDeleteSection(false)
+  const deletePhonebookEntry = async () => {
+    try {
+      const query = q.Delete(q.Ref(q.Collection(collection), id))
+      await client.query(query)
+      console.log('Phonebook Entry Deleted')
+      navigate('/')
+    } catch (error) {
+      console.error('Failed to delete phonebook entry', error)
+      throw error
+    }
   }
 
   const deleteMutation = useMutation(deletePhonebookEntry, {
@@ -86,7 +78,7 @@ const PhonebookEntryComponent = () => {
         data: updatedValues,
       })
       const response = await client.query<PhonebookEntryData>(query)
-      console.log('Phonebook entry updated:', response)
+      console.log('Phonebook Entry Updated:', response)
       return response
     },
     {
@@ -115,6 +107,16 @@ const PhonebookEntryComponent = () => {
     }
 
     updateMutation.mutate(formValues)
+  }
+
+  const toggleDeleteSection = () => {
+    setDeleteSection(!deleteSection)
+    setEditSection(false)
+  }
+
+  const toggleEditSection = () => {
+    setEditSection(!editSection)
+    setDeleteSection(false)
   }
 
   if (isLoading) {
@@ -307,7 +309,7 @@ const PhonebookEntryComponent = () => {
                     required={
                       fieldName === 'firstName' || fieldName === 'number'
                     }
-                    label={fieldName.toString()}
+                    label={formatText(fieldName.toString())}
                     name={fieldName.toString()}
                     value={formValues[fieldName]}
                     onChange={handleInputChange}

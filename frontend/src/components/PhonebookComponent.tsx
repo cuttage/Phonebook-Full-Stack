@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from 'react-query'
 import useStringAvatar from '../hooks/useStringAvatar'
 import { useForm } from '../hooks/useForm'
+import useFormattedString from '../hooks/useFormattedString'
 import { initialFormValues, fieldNames } from '../formUtils'
 import {
   IconButton,
@@ -16,6 +17,7 @@ import {
   List,
   Avatar,
   Button,
+  Pagination,
 } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 
@@ -24,7 +26,14 @@ const collection = process.env.REACT_APP_FAUNA_COLLECTION as string
 const PhonebookComponent = () => {
   const queryClient = useQueryClient()
   const { formValues, setFormValues, handleInputChange } = useForm()
+  const formatText = useFormattedString()
   const [addSection, setAddSection] = useState<boolean>(false)
+  const [sortKey, setSortKey] = useState<string>('firstName')
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const ITEMS_PER_PAGE = 10
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
 
   const fetchPhonebookEntries = async () => {
     try {
@@ -50,9 +59,25 @@ const PhonebookComponent = () => {
     isError,
   } = useQuery('phonebookEntries', fetchPhonebookEntries)
 
-  const toggleAddSection = () => {
-    setAddSection(!addSection)
-  }
+  const sortedEntries = phonebookEntries?.sort((a, b) => {
+    const nameA = (a?.data[sortKey as keyof EntryData] || '').toLowerCase()
+    const nameB = (b?.data[sortKey as keyof EntryData] || '').toLowerCase()
+    return nameA.localeCompare(nameB)
+  })
+
+  const filteredEntries = sortedEntries?.filter((entry) => {
+    const fullName = `${entry?.data?.firstName} ${
+      entry?.data?.lastName || ''
+    }`.toLowerCase()
+    const number = entry?.data?.number?.toLowerCase()
+
+    return (
+      fullName.includes(searchQuery.toLowerCase()) ||
+      number.includes(searchQuery.toLowerCase())
+    )
+  })
+
+  const itemCount = filteredEntries?.length || 0
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -72,7 +97,7 @@ const PhonebookComponent = () => {
         q.Create(q.Collection(collection), { data: formValues })
       )
 
-      console.log('Form submitted:', response)
+      console.log('Phonebook Entry Created:', response)
 
       queryClient.invalidateQueries('phonebookEntries')
 
@@ -80,6 +105,18 @@ const PhonebookComponent = () => {
     } catch (error) {
       console.error('Failed to create phonebook entry', error)
     }
+  }
+
+  const handleSort = (key: string) => {
+    setSortKey(key)
+  }
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value)
+  }
+
+  const toggleAddSection = () => {
+    setAddSection(!addSection)
   }
 
   if (isLoading) {
@@ -138,6 +175,65 @@ const PhonebookComponent = () => {
             sx={{
               border: '1px solid #f2f3f4',
             }}
+          >
+            <Button
+              onClick={() => handleSort('firstName')}
+              sx={{
+                color: '#f2f3f4',
+                fontFamily: 'Prompt',
+                fontWeight: 700,
+                textRendering: 'geometricPrecision',
+              }}
+            >
+              Sort by First Name
+            </Button>
+            <Button
+              onClick={() => handleSort('lastName')}
+              sx={{
+                color: '#f2f3f4',
+                fontFamily: 'Prompt',
+                fontWeight: 700,
+                textRendering: 'geometricPrecision',
+              }}
+            >
+              Sort by Last Name
+            </Button>
+          </ListItem>
+          <ListItem
+            sx={{
+              border: '1px solid #f2f3f4',
+            }}
+          >
+            <TextField
+              label="Search"
+              name="searchQuery"
+              value={searchQuery}
+              onChange={handleSearch}
+              variant="filled"
+              sx={{
+                border: '1px solid #f2f3f4',
+                input: {
+                  color: '#f2f3f4',
+                  fontFamily: 'Prompt',
+                  fontWeight: 700,
+                },
+                label: {
+                  color: '#f2f3f4',
+                  fontFamily: 'Prompt',
+                  fontWeight: 700,
+                },
+                fontFamily: 'Prompt',
+                bgcolor: '#0d0111',
+              }}
+              margin="dense"
+              color="secondary"
+              fullWidth
+            />
+          </ListItem>
+          <ListItem
+            sx={{
+              border: '1px solid #f2f3f4',
+            }}
             onClick={toggleAddSection}
           >
             <ListItemAvatar>
@@ -175,7 +271,7 @@ const PhonebookComponent = () => {
                     required={
                       fieldName === 'firstName' || fieldName === 'number'
                     }
-                    label={fieldName.toString()}
+                    label={formatText(fieldName.toString())}
                     name={fieldName.toString()}
                     value={formValues[fieldName]}
                     onChange={handleInputChange}
@@ -220,7 +316,7 @@ const PhonebookComponent = () => {
               </form>
             </ListItem>
           )}
-          {phonebookEntries?.map((entry, index) => (
+          {filteredEntries?.slice(startIndex, endIndex).map((entry, index) => (
             <ListItem
               key={entry?.ref?.value?.id}
               sx={{
@@ -270,6 +366,20 @@ const PhonebookComponent = () => {
               </Link>
             </ListItem>
           ))}
+          <Pagination
+            count={Math.ceil(itemCount / ITEMS_PER_PAGE)}
+            page={currentPage}
+            onChange={(_, page) => setCurrentPage(page)}
+            sx={{
+              button: {
+                color: '#f2f3f4',
+                fontFamily: 'Prompt',
+                fontWeight: 700,
+                textRendering: 'geometricPrecision',
+                marginTop: '20px',
+              },
+            }}
+          />
         </List>
       )}
     </div>
