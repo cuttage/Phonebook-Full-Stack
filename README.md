@@ -41,7 +41,7 @@ creating key for database 'test' with role 'admin'
   the above secret.
 ```
 
-5. Create a `schema.gql` file with the following content. This will be used by the Fauna GraphQL API exposed at port 8084 and not by the Fauna Http API exposed at port 8443. Please note that data are not in sync between the two (in the project I will work with the Http API):
+5. Create a `schema.gql` file with the following content. This will be used by the Fauna GraphQL API exposed at port `8084` and not by the Fauna Http API exposed at port `8443`. Please note that by default data are not in sync between the two (in the project I will work with the Http API):
 
 ```
 type Phonebook {
