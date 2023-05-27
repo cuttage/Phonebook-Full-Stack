@@ -196,7 +196,7 @@ The Phonebook Full Stack application includes tests to ensure the functionality 
 
 1. Open a terminal window.
 
-2. Navigate to the root directory of the project.
+2. Navigate to the root directory of the project (make sure you are in the `frontend` directory).
 
 3. Run the following command to install the required dependencies:
 
@@ -204,7 +204,7 @@ The Phonebook Full Stack application includes tests to ensure the functionality 
 npm i
 ```
 
-4. Run the following command to execute the tests (make sure you are in the `frontend` directory):
+4. Run the following command to execute the tests:
 
 ```bash
 npm run test
