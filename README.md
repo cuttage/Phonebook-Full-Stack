@@ -77,7 +77,7 @@ fauna shell test --secret=secret --domain=127.0.0.1 --port=8443 --scheme=http
 
 This will open a shell where you can interact with your FaunaDB database.
 
-8. Optional: Show available collections by running:
+8. Show available collections by running:
 
 ```
 Paginate(Collections())
@@ -115,13 +115,13 @@ Response is:
 }
 ```
 
-10. Optional: Get collection by running:
+10. Get collection by running:
 
 ```
 Get(Collection('PhonebookEntry'))
 ```
 
-11. Optional: Get created document by running:
+11. Get created document by running:
 
 ```
 Get(<your-ref>)
