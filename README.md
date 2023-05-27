@@ -176,7 +176,7 @@ To search for specific entries, enter a search query in the search input field a
 
 ##### Adding a New Entry
 
-To add a new phonebook entry, click on the "Add" button. This will open a form where you can enter the details of the new entry, including the first name, last name, and phone number. Once you have entered the information, click the "Save" button to add the entry to the phonebook.
+To add a new phonebook entry, click on the "Add" button. This will open a form where you can enter the details of the new entry, including the first name, last name, and phone number. Once you have entered the information, click the "Create" button to add the entry to the phonebook.
 
 #### Detail View
 
