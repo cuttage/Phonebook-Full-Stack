@@ -55,7 +55,7 @@ type PhonebookEntry {
 }
 ```
 
-6. Import the `schema.gql` file into FaunaDB by running the following command by resplacing `<generated-secret>` with the actual connection key generated in step 4:
+6. Import the `schema.gql` file into FaunaDB by running the following command by replacing `<generated-secret>` with the actual connection key generated in step 4:
 
 ```bash
 curl -u <generated-secret>: http://localhost:8084/import --data-binary "@schema.gql"
