@@ -210,7 +210,7 @@ npm i
 npm run test
 ```
 
-The tests will run and provide feedback on the success or failure of each test case. The tests cover the creation, retrieval, update, and deletion of documents in the PhonebookEntry collection using FaunaDB queries. The tests are located in the `src/__tests__` directory.
+The tests will run and provide feedback on the success or failure of each test case. The tests cover the creation, retrieval, update, and deletion of documents in the PhonebookEntry collection using FaunaDB queries. The tests are located in the `__tests__` directory.
 
 ## Logging
 
